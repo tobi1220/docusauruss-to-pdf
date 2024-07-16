@@ -1,8 +1,8 @@
 import chalk from 'chalk';
-import console_stamp from 'console-stamp';
+import consoleStamp from 'console-stamp';
 import * as puppeteer from 'puppeteer-core';
 
-console_stamp(console);
+consoleStamp.default(console);
 
 /**
  * Checks whether a page contains a given keyword

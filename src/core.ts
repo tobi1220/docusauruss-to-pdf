@@ -1,16 +1,16 @@
 import chalk from 'chalk';
-import console_stamp from 'console-stamp';
+import consoleStamp from 'console-stamp';
 import * as puppeteer from 'puppeteer-core';
 import { scrollPageToBottom } from 'puppeteer-autoscroll-down';
 import * as fs from 'fs-extra';
-import { chromeExecPath } from './browser';
-import * as utils from './utils';
+import { chromeExecPath } from './browser.js';
+import * as utils from './utils.js';
 
-console_stamp(console);
+consoleStamp.default(console);
 
 let contentHTML = '';
 export interface GeneratePDFOptions {
-  initialDocURLs: Array<string>;
+  docsEntryPoint: string;
   excludeURLs: Array<string>;
   outputPDFFilename: string;
   pdfMargin: puppeteer.PDFOptions['margin'];
@@ -39,7 +39,7 @@ export interface GeneratePDFOptions {
 
 /* c8 ignore start */
 export async function generatePDF({
-  initialDocURLs,
+  docsEntryPoint,
   excludeURLs,
   outputPDFFilename = 'docs-to-pdf.pdf',
   pdfMargin = { top: 32, right: 32, bottom: 32, left: 32 },
@@ -66,7 +66,7 @@ export async function generatePDF({
   const execPath = process.env.PUPPETEER_EXECUTABLE_PATH ?? chromeExecPath();
   console.debug(chalk.cyan(`Using Chromium from ${execPath}`));
   const browser = await puppeteer.launch({
-    headless: 'new',
+    headless: true,
     executablePath: execPath,
     args: puppeteerArgs,
     protocolTimeout: protocolTimeout,
@@ -89,8 +89,8 @@ export async function generatePDF({
     } else request.continue();
   });
 
-  console.debug(`InitialDocURLs: ${initialDocURLs}`);
-  for (const url of initialDocURLs) {
+  console.debug(`InitialDocURLs: ${docsEntryPoint}`);
+  for (const url of [docsEntryPoint]) {
     let nextPageURL = url;
     const urlPath = new URL(url).pathname;
 
@@ -158,7 +158,9 @@ export async function generatePDF({
   console.log(chalk.cyan('Restructuring the html of a document...'));
 
   // Go to initial page
-  await page.goto(`${initialDocURLs[0]}`, { waitUntil: 'networkidle0' });
+  await page.goto(`${docsEntryPoint}`, { waitUntil: 'networkidle0' });
+
+  console.info(await page.content());
 
   await page.evaluate(
     utils.concatHtml,

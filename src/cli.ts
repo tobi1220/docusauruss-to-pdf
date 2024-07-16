@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import * as command from './command';
+import { makeProgram } from './command.js';
 
-const program = command.makeProgram();
+const program = makeProgram();
 
 try {
   program.parse(process.argv);

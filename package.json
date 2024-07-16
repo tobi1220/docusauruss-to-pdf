@@ -2,6 +2,7 @@
   "name": "docusauruss-to-pdf",
   "version": "0.0.1",
   "description": "Generate PDFs based on your Docusaurus pages.",
+  "type": "module",
   "main": "lib/cli.js",
   "scripts": {
     "dev": "tsc --watch",

@@ -2,17 +2,17 @@ import { Command, Option } from 'commander';
 import {
   commaSeparatedList,
   generatePuppeteerPDFMargin,
-} from './commander-options';
-import { generatePDF, GeneratePDFOptions } from './core';
+} from './commander-options.js';
+import { generatePDF, GeneratePDFOptions } from './core.js';
 import {
   generateDocusaurusPDF,
   DocusaurusOptions,
-} from './provider/docusaurus';
+} from './provider/docusaurus.js';
 import chalk from 'chalk';
-import console_stamp from 'console-stamp';
-const version = require('../package.json').version;
+import consoleStamp from 'console-stamp';
+const version = await import("../package.json", { assert: { type: "json" } }).then(module => module.default.version);
 
-console_stamp(console);
+consoleStamp.default(console);
 
 export function makeProgram() {
   const program = new Command('');
@@ -38,7 +38,7 @@ export function makeProgram() {
       new Option(
         '--docsDir <dir>',
         'directory of docs in Docusaurus site to generate PDF from',
-      ).conflicts('--initialDocURLs'),
+      ),
     )
     .action((options: DocusaurusOptions) => {
       console.debug('Generate from Docusaurus');
@@ -54,30 +54,10 @@ export function makeProgram() {
         });
     });
 
-  docstopdf
-    .command('core', { isDefault: true })
-    .description("generate PDF from Core's options")
-    .action((options: GeneratePDFOptions) => {
-      if (options.pdfFormat) {
-        console.log(chalk.red('--pdfFormat is deprecated, use --paperFormat'));
-        process.exit(1);
-      }
-      console.debug('Generate from Core');
-      generatePDF(options)
-        .then(() => {
-          console.log(chalk.green('Finish generating PDF!'));
-          process.exit(0);
-        })
-        .catch((err: { stack: unknown }) => {
-          console.error(chalk.red(err.stack));
-          process.exit(1);
-        });
-    });
-
   docstopdf.commands.forEach((cmd) => {
     cmd
       .option(
-        '--initialDocURLs <urls>',
+        '--docsEntryPoint <urls>',
         'set urls to start generating PDF from',
         commaSeparatedList,
       )
@@ -106,7 +86,6 @@ export function makeProgram() {
         'set margin around PDF file',
         generatePuppeteerPDFMargin,
       )
-      .option('--pdfFormat <format>', '(DEPRECATED use paperFormat)') //TODO: Remove at next major version, replaced by paperFormat
       .option('--paperFormat <format>', 'pdf format ex: A3, A4...')
       .option('--coverTitle <title>', 'title for PDF cover')
       .option(
@@ -143,7 +122,7 @@ export function makeProgram() {
       )
       .option(
         '--restrictPaths',
-        'only the paths in the --initialDocURLs will be included in the PDF',
+        'only the paths in the --docsEntryPoint will be included in the PDF',
       )
       .option(
         '--openDetail',
