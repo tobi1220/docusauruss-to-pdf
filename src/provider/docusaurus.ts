@@ -20,7 +20,7 @@ export async function generateDocusaurusPDF(
   if (version == 2) {
     console.debug('Docusaurus version 2');
     core.paginationSelector =
-      'a.pagination-nav__link pagination-nav__link--next';
+      'a.pagination-nav__link.pagination-nav__link--next';
     core.excludeSelectors = [
       '.margin-vert--xl a',
       "[class^='tocCollapsible']",
@@ -125,7 +125,8 @@ export async function generateFromBuild(
 ): Promise<void> {
   await checkBuildDir(buildDirPath);
   const app = await startDocusaurusServer(buildDirPath);
-  options.docsEntryPoint = `http://127.0.0.1:3000${options.docsEntryPoint}`;
+  options.docsEntryPoint = `http://localhost:3000${options.docsEntryPoint}`;
+  options.protocolTimeout = 0;
   await generatePDF(options);
   console.log('Stopping server');
   await stopDocusaurusServer(app);

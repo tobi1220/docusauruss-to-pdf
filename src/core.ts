@@ -2,9 +2,9 @@ import chalk from 'chalk';
 import consoleStamp from 'console-stamp';
 import * as puppeteer from 'puppeteer-core';
 import { scrollPageToBottom } from 'puppeteer-autoscroll-down';
-import * as fs from 'fs-extra';
 import { chromeExecPath } from './browser.js';
 import * as utils from './utils.js';
+import { createInterface } from 'node:readline/promises';
 
 consoleStamp.default(console);
 
@@ -41,7 +41,7 @@ export interface GeneratePDFOptions {
 export async function generatePDF({
   docsEntryPoint,
   excludeURLs,
-  outputPDFFilename = 'docs-to-pdf.pdf',
+  outputPDFFilename = 'docusaurus-to-pdf.pdf',
   pdfMargin = { top: 32, right: 32, bottom: 32, left: 32 },
   contentSelector,
   paginationSelector,
@@ -70,6 +70,8 @@ export async function generatePDF({
     executablePath: execPath,
     args: puppeteerArgs,
     protocolTimeout: protocolTimeout,
+    dumpio: true,
+    timeout: 0,
   });
 
   const chromeTmpDataDir = browser
@@ -79,6 +81,8 @@ export async function generatePDF({
   console.debug(chalk.cyan(`Chrome user data dir: ${chromeTmpDataDir}`));
 
   const page = await browser.newPage();
+
+  page.on("console", msg => console.debug("PAGE", msg.text()));
 
   // Block PDFs as puppeteer can not access them
   await page.setRequestInterception(true);
@@ -100,7 +104,7 @@ export async function generatePDF({
 
       // Go to the page specified by nextPageURL
       await page.goto(`${nextPageURL}`, {
-        waitUntil: 'networkidle0',
+        waitUntil: "networkidle0",
         timeout: 0,
       });
       if (waitForRender) {
@@ -158,9 +162,7 @@ export async function generatePDF({
   console.log(chalk.cyan('Restructuring the html of a document...'));
 
   // Go to initial page
-  await page.goto(`${docsEntryPoint}`, { waitUntil: 'networkidle0' });
-
-  console.info(await page.content());
+  await page.goto(`${docsEntryPoint}`, { waitUntil: "networkidle0", timeout: 0 });
 
   await page.evaluate(
     utils.concatHtml,
@@ -202,12 +204,11 @@ export async function generatePDF({
   });
 
   console.log(chalk.green(`PDF generated at ${outputPDFFilename}`));
+  const c = createInterface({input: process.stdin});
+  await c.question('Press Enter to exit').then(() => {c.close();})
   await browser.close();
   console.log(chalk.green('Browser closed'));
 
-  if (chromeTmpDataDir !== null) {
-    fs.removeSync(chromeTmpDataDir);
-  }
   console.debug(chalk.cyan('Chrome user data dir removed'));
 }
 /* c8 ignore stop */
